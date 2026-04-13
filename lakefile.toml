@@ -1,0 +1,10 @@
+name = "HDP"
+version = "0.1.0"
+defaultTargets = ["hdp"]
+
+[[lean_lib]]
+name = "HDP"
+
+[[lean_exe]]
+name = "hdp"
+root = "Main"
