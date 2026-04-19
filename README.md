@@ -1,1 +1,1 @@
-# HDP
+# Harrison decision procedure
