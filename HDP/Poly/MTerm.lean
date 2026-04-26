@@ -1,13 +1,5 @@
-/-
-
-  LICENSE goes here.
-
-  Verus-Lean contributors.
-
--/
-
 import HDP.Poly.Monomial
-import HDP.Ring.Classes
+import Init.Grind.Ring.Field
 
 /-!
 
@@ -15,6 +7,7 @@ import HDP.Ring.Classes
 
 -/
 
+open Lean.Grind
 
 namespace HDP.Poly
 
@@ -86,8 +79,8 @@ def toString [ToString F] : MTerm F → String
 instance instToString (F : Type u) [Field F] [DecidableEq F] [ToString F] : ToString (MTerm F) :=
   ⟨toString⟩
 
-instance instCoeOfNat : Coe Nat (MTerm F) := ⟨λ n => mk n 0⟩
-instance instCoeOfInt : Coe Int (MTerm F) := ⟨λ i => mk i 0⟩
+instance instCoeOfNat [NatCast F] : Coe Nat (MTerm F) := ⟨λ n => mk n 0⟩
+instance instCoeOfInt [IntCast F] : Coe Int (MTerm F) := ⟨λ i => mk i 0⟩
 --instance instCoeOfCoeff : Coe Rat (MTerm F) := ⟨λ c => mk c 0⟩
 instance instCoeOfMonomial : Coe Monomial (MTerm F) := ⟨λ m => mk 1 m⟩
 --instance instCoeToCoeff : Coe MTerm Rat := ⟨coeff⟩

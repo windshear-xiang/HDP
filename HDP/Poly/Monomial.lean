@@ -1,6 +1,4 @@
 
-import Init.Data.Nat.MinMax
-
 namespace HDP.Poly
 
 /-
