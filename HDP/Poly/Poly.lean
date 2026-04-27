@@ -1,6 +1,4 @@
--- import AutoGB.Upstream.Batteries.Rat
 import HDP.Poly.MTerm
--- import HDP.Ring.Rat
 
 open Lean.Grind
 
