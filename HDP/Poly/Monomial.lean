@@ -405,6 +405,24 @@ theorem get_eᵢ_eq (i j : Nat) : (eᵢ i).get j = (if i = j then 1 else 0) := b
     rw [Array.getElem_set]
     simp [(Nat.ne_of_lt h_gt).symm]
 
+@[simp] theorem eᵢ_one : eᵢ 1 = #[0, 1] := rfl
+
+-- 标准基向量的递推：eᵢ (i+1) = #[0] ++ eᵢ i（在 Array 层面）
+@[simp] theorem eᵢ_succ (i : Nat) : eᵢ (i + 1) = #[0] ++ eᵢ i := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    sorry
+    done
+  done
+
+-- 将 eᵢ (i+1) 转换为 List 后，头部为 0，尾部为 eᵢ i 的 List 表示
+@[simp]
+theorem toList_eᵢ_succ (i : Nat) : (Monomial.eᵢ (i + 1)).toList = 0 :: (Monomial.eᵢ i).toList := by
+  induction i with
+  | zero => simp
+  | succ i ih => simp
+
 end Monomial
 
 end HDP.Poly
