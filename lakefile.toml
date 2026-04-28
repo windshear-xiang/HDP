@@ -4,7 +4,3 @@ defaultTargets = ["hdp"]
 
 [[lean_lib]]
 name = "HDP"
-
-[[lean_exe]]
-name = "hdp"
-root = "Main"
