@@ -139,7 +139,7 @@ protected def sub (p₁ p₂ : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P
           loop (i + 1) j (p.push p₁[i])
       else if hj : j < numTerms₂ then
         -- p₁ is done, so push the rest of p₂
-        loop i (j + 1) (p.push p₂[j])
+        loop i (j + 1) (p.push (-p₂[j]))
       else
         p
     else
