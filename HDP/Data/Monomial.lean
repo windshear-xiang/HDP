@@ -1,5 +1,4 @@
-
-namespace HDP.Poly
+namespace HDP.Data
 
 /-
 CC: TODO: Right now there are an infinite number of ways to represent the
@@ -23,6 +22,25 @@ instance instInhabited : Inhabited Monomial := ⟨0⟩
 instance instDecidableEq : DecidableEq Monomial :=
   inferInstanceAs (DecidableEq (Array Nat))
   -- TG: BEq is defined by droping zeros, different with DEq
+
+protected def beq (m₁ m₂ : Monomial) : Bool :=
+  let rec loop (i : Nat) : Bool :=
+    if h₁ : i < m₁.size then
+      if h₂ : i < m₂.size then
+        if m₁[i] = m₂[i] then loop (i + 1)
+        else                  false
+      else
+        if m₁[i] = 0 then     loop (i + 1)
+        else                  false
+    else
+      if h₂ : i < m₂.size then
+        if m₂[i] = 0 then     loop (i + 1)
+        else                  false
+      else                    true
+  termination_by (m₁.size + m₂.size) - i
+  loop 0
+
+instance instBEq : BEq Monomial := ⟨Monomial.beq⟩
 
 def size (m : Monomial) : Nat := Array.size m
 def get (m : Monomial) (i : Nat) : Nat := m.getD i 0
@@ -195,25 +213,6 @@ def lcmIfNotCoprime (m₁ m₂ : Monomial) : Option Monomial :=
         else none
   termination_by (m₁.size + m₂.size) - i
   loop 0 false 0
-
-protected def beq (m₁ m₂ : Monomial) : Bool :=
-  let rec loop (i : Nat) : Bool :=
-    if h₁ : i < m₁.size then
-      if h₂ : i < m₂.size then
-        if m₁[i] = m₂[i] then loop (i + 1)
-        else                  false
-      else
-        if m₁[i] = 0 then     loop (i + 1)
-        else                  false
-    else
-      if h₂ : i < m₂.size then
-        if m₂[i] = 0 then     loop (i + 1)
-        else                  false
-      else                    true
-  termination_by (m₁.size + m₂.size) - i
-  loop 0
-
-instance instBEq : BEq Monomial := ⟨Monomial.beq⟩
 
 /-- Multiplies two monomials together by adding their exponents.  -/
 protected def mul (m₁ m₂ : Monomial) : Monomial :=
@@ -423,4 +422,4 @@ instance instHPow : HPow Monomial Nat Monomial := ⟨Monomial.scPow⟩
 
 end Monomial
 
-end HDP.Poly
+end HDP.Data

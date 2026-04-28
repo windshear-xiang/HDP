@@ -1,4 +1,4 @@
-import HDP.Poly.Monomial
+import HDP.Data.Monomial
 import Init.Grind.Ring.Field
 
 /-!
@@ -7,9 +7,9 @@ import Init.Grind.Ring.Field
 
 -/
 
-open Lean.Grind
+open Lean.Grind (Field)
 
-namespace HDP.Poly
+namespace HDP.Data
 
 /--
   A monomial term is a coefficient `coeff` multiplied by a monomial.
@@ -173,4 +173,4 @@ instance instSub : Sub (MTermRef F) := ⟨MTermRef.sub⟩
 
 end MTermRef
 
-end HDP.Poly
+end HDP.Data
