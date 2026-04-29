@@ -331,6 +331,10 @@ partial def buchbergers (ps : Array P[F]) (cmp : MOrder := Monomial.grevlexOrder
 -/
 partial def idealMembership (p : P[F]) (ps : Array P[F])
     (cmp : MOrder := Monomial.grevlexOrder) : Option (Array P[F]) :=
+  -- canonicalize Polynomials before compute
+  let p := Poly.canonicalize p cmp
+  let ps := ps.map (Poly.canonicalize · cmp)
+  -- compute
   let n := ps.size
   let basis := buchbergers ps
   let (_, ⟨rem, remHist⟩) := HPoly.divPolys (HPoly.mk p (.basis n)) basis cmp

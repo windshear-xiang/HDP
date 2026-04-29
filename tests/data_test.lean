@@ -1,4 +1,5 @@
 import HDP.Data.Buchberger
+import HDP.Data.Poly
 
 open HDP.Data
 

@@ -235,6 +235,37 @@ partial def divPolys (p : P[F]) (ps : Array P[F])
     simp only [Array.size_replicate, qs]
   loop p 0 qs hqs
 
+/--
+  the canonical sorted form of a polynomial:
+  sorts terms in decreasing order under `cmp`, merges like monomials
+-/
+def canonicalize (p : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P[F] :=
+  -- `Array.qsort lt`: `lt a b = true` ⇒ `a` comes before `b`. We want
+  -- larger monomials first, i.e. `a > b ↔ cmp b.mon a.mon = .lt`.
+  let sorted := p.qsort (λ a b => cmp b.monomial a.monomial = .lt)
+  let rec loop (i : Nat) (acc : P[F]) : P[F] :=
+    if h : i < sorted.size then
+      let t := sorted[i]
+      if t.coeff = 0 then
+        loop (i + 1) acc
+      else
+        match acc.back? with
+        | none => loop (i + 1) (acc.push t)
+        | some prev =>
+          match cmp prev.monomial t.monomial with
+          | .eq =>
+            let newCoeff := prev.coeff + t.coeff
+            let acc' := acc.pop
+            if newCoeff = 0 then
+              loop (i + 1) acc'
+            else
+              loop (i + 1) (acc'.push (MTerm.mk newCoeff prev.monomial))
+          | _ => loop (i + 1) (acc.push t)
+    else
+      acc
+  termination_by sorted.size - i
+  loop 0 #[]
+
 end Poly
 
 end HDP.Data
