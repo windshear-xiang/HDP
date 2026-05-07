@@ -13,9 +13,11 @@ namespace HDP
 open HDP.Data
 
 def hdpTactic : TacticM Unit := do
-  let g ← getMainGoal
+  let g₀ ← getMainGoal
+  let g ← g₀.withContext do processGoal g₀
+
   let goalType ← g.getType
-  logInfo m!"goal = {goalType}"
+  logInfo m!"normalized goal = {goalType}"
 
   g.withContext do
     let hyps ← getLocalHyps
@@ -24,16 +26,7 @@ def hdpTactic : TacticM Unit := do
 
     -- Parse all hypotheses into polynomials
     for h in hyps do
-      let t ← inferType h
-      match_expr t with
-      | Eq α lhs rhs =>
-        if !α.isConstOf ``Int then do continue
-        -- parse (lhs - rhs)
-        let (atoms', plhs) ← asPoly atoms  lhs
-        let (atoms', prhs) ← asPoly atoms' rhs
-        atoms := atoms'
-        polys := polys.push (plhs - prhs)
-      | _ => continue
+      (atoms, polys) ← ProcessFact atoms polys h
     logInfo m!"atoms in hyps = {atoms}"
     logInfo m!"polys in hyps = {polys}"
 
@@ -45,14 +38,14 @@ def hdpTactic : TacticM Unit := do
           let #[_e] := eFvars | return none
           match_expr body' with
           | Eq _α lhs rhs =>
-            match_expr lhs with
+            match_expr rhs with
             | HMul.hMul _ _ _ _ a _eVar =>
               let (atoms1, ap) ← asPoly atoms  a
-              let (atoms2, bp) ← asPoly atoms1 rhs
+              let (atoms2, bp) ← asPoly atoms1 lhs
               return some (ap, bp, atoms2)
             | _ => return none
           | _ => return none
-      | _ => return none) | throwError "goal not of form ∃ e, a * e = b"
+      | _ => return none) | throwError "goal not of form ∃ e, b = a * e"
     atoms := atomsFinal
     logInfo m!"goal of form ∃ e, {mulPoly} * e = {targetPoly}"
     logInfo m!"atoms (final) = {atoms}"
@@ -79,6 +72,5 @@ def hdpTactic : TacticM Unit := do
         evalTactic (← `(tactic| grind))
       catch err => throwError "grind failed with {err.toMessageData}"
     | _ => throwError "unexpected goal shape after refine"
-
 
 end HDP
