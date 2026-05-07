@@ -14,8 +14,10 @@ open HDP.Data
 
 def hdpTactic : TacticM Unit := do
   let g₀ ← getMainGoal
-  let g ← g₀.withContext do processGoal g₀
 
+  -- normalize goal into form ∃ e, b = a * e
+  let g ← g₀.withContext do processGoal g₀
+  setGoals [g]
   let goalType ← g.getType
   logInfo m!"normalized goal = {goalType}"
 
@@ -61,7 +63,7 @@ def hdpTactic : TacticM Unit := do
       | throwError "empty witness array"
 
     let witnessExpr ← polyToExpr cofactor atoms
-    logInfo m!"witness expr = {witnessExpr}"
+    logInfo m!"witness expr = {← ppExpr witnessExpr}"
 
     evalTactic (← `(tactic| refine ⟨?w, ?eq⟩))
     match ← getGoals with
@@ -70,6 +72,7 @@ def hdpTactic : TacticM Unit := do
       setGoals [eqMVar]
       try
         evalTactic (← `(tactic| grind))
+        return
       catch err => throwError "grind failed with {err.toMessageData}"
     | _ => throwError "unexpected goal shape after refine"
 
