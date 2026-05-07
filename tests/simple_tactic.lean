@@ -14,3 +14,12 @@ example (a b : Int) (h : a*3 = b) : ∃ e, b * 3 = a * e := by
 
 example (a b c : Int) (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c := by
   hdp
+
+example (a b c : Int) (h₁ : b = a * a) (h₂ : c = a * a * a) : b ∣ c := by
+  hdp
+
+example (a n x y : Int)
+    (h_cong : ∃ d : Int, a * y - a * x = n * d)
+    (h_coprime : ∃ u v : Int, a * u + n * v = 1) :
+    ∃ e : Int, y - x = n * e := by
+  hdp
