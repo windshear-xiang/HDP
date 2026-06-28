@@ -1,5 +1,7 @@
 import HDP.Tactic
 
+set_option trace.hdp true
+
 example (a b : Int) (h : b = a * 2) : ∃ e, b = a * e  := by
   hdp
 
@@ -15,7 +17,7 @@ example (a b : Int) (h : a*3 = b) : ∃ e, b * 3 = a * e := by
 example (a b c : Int) (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c := by
   hdp
 
-example (a b c : Int) (h₁ : b = a * a) (h₂ : c = a * a * a) : b ∣ c := by
+example (a b c : Int) (h₁ : b = a ^ 2) (h₂ : c = a ^ 3) : b ∣ c := by
   hdp
 
 example (a n x y : Int)

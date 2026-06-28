@@ -87,7 +87,7 @@ instance instToString [ToString F] : ToString HP[F] := ⟨toString⟩
 
 -- Divides by the leading coefficient across the whole polynomial.
 -- This makes the leading coefficient 1.
-def normalize (p : HP[F]) : HP[F] :=
+def monic (p : HP[F]) : HP[F] :=
   let ⟨p, pHist⟩ := p
   if p = 0 then ⟨p, pHist⟩ else
   let leadingCoeff := p.leadingTerm.coeff
@@ -217,7 +217,7 @@ def constructWitness (n : Nat) (h : PolyHistory F) (cmp : MOrder) : Array P[F] :
   let zeros : Array P[F] := Array.replicate n 0
   have h_zeros : zeros.size = n := by
     simp only [Array.size_replicate, zeros]
-  let one : P[F] := #[MTerm.mk 1 0]
+  let one : P[F] := #[MTerm.mk (1 : F) Monomial.unit]
 
   let rec loop : PolyHistory F → ({ arr : Array P[F] // arr.size = n })
     | .zero => ⟨zeros, h_zeros⟩
@@ -227,13 +227,13 @@ def constructWitness (n : Nat) (h : PolyHistory F) (cmp : MOrder) : Array P[F] :
         let w := zeros.set i one
         ⟨w, by simp [w, h_zeros]⟩
       else
-        dbg_trace s!"panic! {n} {i}"
+        dbg_trace s!"constructWitness: index {i} out of bounds (basis size {n})"
         ⟨zeros, h_zeros⟩
 
     | .scalarMul c h =>
       match loop h with
       | ⟨w, hw⟩ =>
-        let t : M[F] := MTerm.mk c 0
+        let t : M[F] := MTerm.mk c Monomial.unit
         let w' : Array P[F] := w.map (λ p => t * p)
         ⟨w', by simp [w']; exact hw⟩
 
@@ -289,7 +289,7 @@ partial def buchbergers (ps : Array P[F]) (cmp : MOrder := Monomial.grevlexOrder
     Array HP[F] :=
   -- Transform polynomials into history annotated ones
   let hPolys : Array HP[F] :=
-    ps.mapIdx (λ i p => HPoly.mk p (.basis i)) |>.map HPoly.normalize
+    ps.mapIdx (λ i p => HPoly.mk p (.basis i)) |>.map HPoly.monic
 
   let rec loop (i j checked len : Nat) (hij : i < j)
       (basis : Array HP[F]) (h_len : len ≤ basis.size) :=
@@ -301,8 +301,8 @@ partial def buchbergers (ps : Array P[F]) (cmp : MOrder := Monomial.grevlexOrder
           match HPoly.divPolysUpTo ⟨s, sHist⟩ basis len h_len cmp with
           | (qs, ⟨rem, remHist⟩) =>
             if rem ≠ 0 then
-              let remNormalized := HPoly.normalize ⟨rem, remHist⟩
-              loop i (j + 1) checked len (by omega) (basis.push remNormalized)
+              let remMonic := HPoly.monic ⟨rem, remHist⟩
+              loop i (j + 1) checked len (by omega) (basis.push remMonic)
                 (by simp [Array.size_push]; exact Nat.le_succ_of_le h_len)
             else
               loop i (j + 1) checked len (by omega) basis h_len

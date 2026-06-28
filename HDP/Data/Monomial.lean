@@ -15,36 +15,27 @@ abbrev MOrder := Monomial → Monomial → Ordering
 
 namespace Monomial
 
-protected def zero : Monomial := Array.empty
-instance instZero : Zero Monomial := ⟨Monomial.zero⟩
+/-- Multiplicative unit 1 -/
+protected def unit : Monomial := Array.empty
 
-instance instInhabited : Inhabited Monomial := ⟨0⟩
+instance instInhabited : Inhabited Monomial := ⟨Monomial.unit⟩
 instance instDecidableEq : DecidableEq Monomial :=
   inferInstanceAs (DecidableEq (Array Nat))
-  -- TG: BEq is defined by droping zeros, different with DEq
-
-protected def beq (m₁ m₂ : Monomial) : Bool :=
-  let rec loop (i : Nat) : Bool :=
-    if h₁ : i < m₁.size then
-      if h₂ : i < m₂.size then
-        if m₁[i] = m₂[i] then loop (i + 1)
-        else                  false
-      else
-        if m₁[i] = 0 then     loop (i + 1)
-        else                  false
-    else
-      if h₂ : i < m₂.size then
-        if m₂[i] = 0 then     loop (i + 1)
-        else                  false
-      else                    true
-  termination_by (m₁.size + m₂.size) - i
-  loop 0
-
-instance instBEq : BEq Monomial := ⟨Monomial.beq⟩
 
 def size (m : Monomial) : Nat := Array.size m
 def get (m : Monomial) (i : Nat) : Nat := m.getD i 0
 def get' (m : Monomial) (i : Nat) (hi : i < m.size) : Nat := m[i]
+
+/-- Drop all tail 0s, which is required for unique representation -/
+def trim (m : Monomial) : Monomial :=
+  let rec loop (i : Nat) (m : Monomial) : Monomial :=
+    match i with
+    | 0 => m
+    | i + 1 =>
+      match m.back? with
+      | some 0 => loop i m.pop
+      | _ => m
+  loop m.size m
 
 @[ext]
 theorem ext (m₁ m₂ : Monomial)
@@ -88,6 +79,8 @@ def degreeSum (m : Monomial) : Nat := m.foldl (init := 0) (· + ·)
   scanning from left to right, some `i` has `m₁[i] < m₂[i]`.
 -/
 def lexOrder (m₁ m₂ : Monomial) : Ordering :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let rec loop (i : Nat) : Ordering :=
     if h₁ : i < m₁.size then
       let mi := m₁[i]
@@ -149,6 +142,8 @@ def grevlexOrder (m₁ m₂ : Monomial) : Ordering :=
   have a positive exponent for `xᵢ`.
 -/
 def areCoprime (m₁ m₂ : Monomial) : Bool :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let rec loop (i : Nat) : Bool :=
     if hi₁ : i < m₁.size then
       if hi₂ : i < m₂.size then
@@ -167,6 +162,8 @@ def areCoprime (m₁ m₂ : Monomial) : Bool :=
   formed by taking the maximum exponent for each variable index.
 -/
 protected def lcm (m₁ m₂ : Monomial) : Monomial :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let rec loop (i : Nat) (m : Monomial) : Monomial :=
     if h₁ : i < m₁.size then
       if h₂ : i < m₂.size then
@@ -179,7 +176,7 @@ protected def lcm (m₁ m₂ : Monomial) : Monomial :=
       else
         m
   termination_by (m₁.size + m₂.size) - i
-  loop 0 0
+  loop 0 Monomial.unit
 
 /--
   If the two monomials are coprime, returns `none`. Otherwise, returns
@@ -188,6 +185,8 @@ protected def lcm (m₁ m₂ : Monomial) : Monomial :=
   CC: Perhaps it's better to return the empty (zero) monomial instead?
 -/
 def lcmIfNotCoprime (m₁ m₂ : Monomial) : Option Monomial :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   /-
     We only know if the two monomials are coprime after we check all indexes.
     So we must build the LCM as we go
@@ -212,10 +211,12 @@ def lcmIfNotCoprime (m₁ m₂ : Monomial) : Option Monomial :=
         if areNotCoprime then some m
         else none
   termination_by (m₁.size + m₂.size) - i
-  loop 0 false 0
+  loop 0 false Monomial.unit
 
 /-- Multiplies two monomials together by adding their exponents.  -/
 protected def mul (m₁ m₂ : Monomial) : Monomial :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let maxSize := max m₁.size m₂.size
   let rec loop (i : Nat) (m : Monomial) : Monomial :=
     if i < maxSize then
@@ -224,12 +225,14 @@ protected def mul (m₁ m₂ : Monomial) : Monomial :=
       loop (i + 1) (m.push (a₁ + a₂))
     else
       m
-  loop 0 0
+  loop 0 Monomial.unit
 
 instance instMul : Mul Monomial := ⟨Monomial.mul⟩
 
 -- Divides `m₁` by `m₂`, assuming `m₂` has smaller multidegree.
 def div? (m₁ m₂ : Monomial) : Option Monomial :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let rec loop (i : Nat) (m : Monomial) : Option Monomial :=
     if h₁ : i < m₁.size then
       let mi := m₁[i]
@@ -250,9 +253,11 @@ def div? (m₁ m₂ : Monomial) : Option Monomial :=
       else
         some m
   termination_by (m₁.size + m₂.size) - i
-  loop 0 0
+  (loop 0 Monomial.unit).map Monomial.trim
 
 def div! (m₁ m₂ : Monomial) : Monomial :=
+  let m₁ := Monomial.trim m₁
+  let m₂ := Monomial.trim m₂
   let rec loop (i : Nat) (m : Monomial) : Monomial :=
     if h₁ : i < m₁.size then
       if h₂ : i < m₂.size then
@@ -261,13 +266,13 @@ def div! (m₁ m₂ : Monomial) : Monomial :=
         loop (i + 1) (m.push m₁[i])
     else
       m
-  loop 0 0
+  Monomial.trim (loop 0 Monomial.unit)
 
 instance instDiv : Div Monomial := ⟨Monomial.div!⟩
 
 -- mⁿ
 def scPow (m : Monomial) (n : Nat) : Monomial :=
-  m.map (· * n)
+  Monomial.trim ((Monomial.trim m).map (· * n))
 
 instance instHPow : HPow Monomial Nat Monomial := ⟨Monomial.scPow⟩
 

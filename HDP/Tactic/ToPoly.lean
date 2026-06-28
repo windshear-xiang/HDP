@@ -1,4 +1,5 @@
 import HDP.Data.Poly
+import HDP.Tactic.State
 import Lean.Meta.AppBuilder
 
 /-!
@@ -14,39 +15,28 @@ namespace HDP
 
 open HDP.Data
 
-/--
-Check whether an Expr `e` exists in `atoms`.
-if `e` is found, return its index;
-else just add `e` into `atoms`, return the new `atoms` and `e`'s new index.
--/
-def lookupOrInsert (atoms : Array Expr) (e : Expr) : Array Expr × Nat :=
-  match atoms.findIdx? (· == e) with
-  | some i => (atoms, i)
-  | none   => (atoms.push e, atoms.size)
-
-/-- Parse an `Expr` into `P[F]` polynomial, collect atoms along the way. -/
-partial def asPoly (atoms : Array Expr) (e : Expr) :
-    MetaM (Array Expr × P[Rat]) := do
+/-- Parse an `Expr` into `P[F]` polynomial.
+    Atoms are automatically registered / looked up in `HdpState`. -/
+partial def asPoly (e : Expr) : HdpM P[Rat] := do
   if let some n := e.int? then
-    return (atoms, Poly.ofMTerm (n : Int))
+    return Poly.ofMTerm (n : Int)
   match_expr e with
   | HAdd.hAdd _ _ _ _ a b =>
-    let (atoms, pa) ← asPoly atoms a
-    let (atoms, pb) ← asPoly atoms b
-    return (atoms, pa + pb)
+    pure ((← asPoly a) + (← asPoly b))
   | HSub.hSub _ _ _ _ a b =>
-    let (atoms, pa) ← asPoly atoms a
-    let (atoms, pb) ← asPoly atoms b
-    return (atoms, pa - pb)
+    pure ((← asPoly a) - (← asPoly b))
   | HMul.hMul _ _ _ _ a b =>
-    let (atoms, pa) ← asPoly atoms a
-    let (atoms, pb) ← asPoly atoms b
-    return (atoms, pa * pb)
+    pure ((← asPoly a) * (← asPoly b))
   | Neg.neg _ _ a =>
-    let (atoms, pa) ← asPoly atoms a
-    return (atoms, -pa)
-  | _ => -- Everything else just take as atom
-    let (atoms, i) := lookupOrInsert atoms e
-    return (atoms, Poly.ofMonomial (Monomial.eᵢ i))
+    pure (-(← asPoly a))
+  | HPow.hPow _ _ _ _ base exp =>
+    match exp.nat? with
+    | some n => pure ((← asPoly base) ^ n)
+    | none =>
+      let i ← HdpState.addAtom e
+      return Poly.ofMonomial (Monomial.eᵢ i)
+  | _ =>
+    let i ← HdpState.addAtom e
+    return Poly.ofMonomial (Monomial.eᵢ i)
 
 end HDP

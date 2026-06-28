@@ -20,10 +20,10 @@ structure MTerm (F : Type u) [Field F] where
   monomial : Monomial := #[]
 deriving Inhabited
 
-structure MTermRef (F : Type u) [Field F] where
-  coeff : F := 1
-  monomial : Nat := 0
-deriving Inhabited, DecidableEq
+-- structure MTermRef (F : Type u) [Field F] where
+--   coeff : F := 1
+--   monomial : Nat := 0
+-- deriving Inhabited, DecidableEq
 
 -- TODO: Replace coefficients with a general field `F`.
 
@@ -50,7 +50,7 @@ def grevlexOrder (t₁ t₂ : MTerm F) : Ordering := Monomial.grevlexOrder t₁.
 -- instance instZero (F : outParam (Type u)) [Field F] : Zero (MTerm F) := ⟨MTerm.zero F⟩
 -- instance instInhabited (F : outParam (Type u)) [Field F] : Inhabited (MTerm F) := ⟨0⟩
 
-protected def zero : MTerm F := mk 0 0
+protected def zero : MTerm F := mk 0 Monomial.unit
 instance instZero : Zero (MTerm F) := ⟨MTerm.zero⟩
 instance instInhabited : Inhabited (MTerm F) := ⟨0⟩
 
@@ -63,7 +63,10 @@ instance instDecidableEq : DecidableEq (MTerm F) := by
     · simp [hc, hm]; exact isFalse id
   · simp [hc]; exact isFalse id
 
-protected def one : MTerm F := mk 1 0
+protected def one : MTerm F := mk 1 Monomial.unit
+
+def normalize (t : MTerm F) : MTerm F :=
+  mk t.coeff (Monomial.trim t.monomial)
 
 def toString [ToString F] : MTerm F → String
   | ⟨c, m⟩ =>
@@ -73,36 +76,49 @@ def toString [ToString F] : MTerm F → String
   else
     if c = 1 then
       s!"{m}"
+    else if c = (-1 : F) then
+      s!"-{m}"
     else
       s!"{c} {m}"
 
 instance instToString (F : Type u) [Field F] [DecidableEq F] [ToString F] : ToString (MTerm F) :=
   ⟨toString⟩
 
-instance instCoeOfNat [NatCast F] : Coe Nat (MTerm F) := ⟨λ n => mk n 0⟩
-instance instCoeOfInt [IntCast F] : Coe Int (MTerm F) := ⟨λ i => mk i 0⟩
+instance instCoeOfNat [NatCast F] : Coe Nat (MTerm F) := ⟨λ n => mk n Monomial.unit⟩
+instance instCoeOfInt [IntCast F] : Coe Int (MTerm F) := ⟨λ i => mk i Monomial.unit⟩
 --instance instCoeOfCoeff : Coe Rat (MTerm F) := ⟨λ c => mk c 0⟩
-instance instCoeOfMonomial : Coe Monomial (MTerm F) := ⟨λ m => mk 1 m⟩
+instance instCoeOfMonomial : Coe Monomial (MTerm F) := ⟨λ m => normalize (mk 1 m)⟩
 --instance instCoeToCoeff : Coe MTerm Rat := ⟨coeff⟩
 --instance instCoeToMonomial (F : Type u) [Field F] : Coe (MTerm F) Monomial := ⟨monomial⟩
 --instance instCoeProd : Coe (Rat × Monomial) MTerm := ⟨λ ⟨c, m⟩ => mk c m⟩
 
 def neg (t : MTerm F) : MTerm F :=
+  let t := normalize t
   mk (-t.coeff) t.monomial
 
 protected def add (t₁ t₂ : MTerm F) : MTerm F :=
-  if t₁.monomial = t₂.monomial then
-    mk (t₁.coeff + t₂.coeff) t₁.monomial
+  let t₁ := normalize t₁
+  let t₂ := normalize t₂
+  let m₁ := t₁.monomial
+  let m₂ := t₂.monomial
+  if m₁ = m₂ then
+    mk (t₁.coeff + t₂.coeff) m₁
   else
     panic! "monomials must be equal"
 
 protected def sub (t₁ t₂ : MTerm F) : MTerm F :=
-  if t₁.monomial = t₂.monomial then
-    mk (t₁.coeff - t₂.coeff) t₁.monomial
+  let t₁ := normalize t₁
+  let t₂ := normalize t₂
+  let m₁ := t₁.monomial
+  let m₂ := t₂.monomial
+  if m₁ = m₂ then
+    mk (t₁.coeff - t₂.coeff) m₁
   else
     panic! "monomials must be equal"
 
 protected def mul (t₁ t₂ : MTerm F) : MTerm F :=
+  let t₁ := normalize t₁
+  let t₂ := normalize t₂
   mk (t₁.coeff * t₂.coeff) (t₁.monomial * t₂.monomial)
 
 instance instNeg : Neg (MTerm F) := ⟨neg⟩
@@ -112,8 +128,8 @@ instance instMul : Mul (MTerm F) := ⟨MTerm.mul⟩
 
 -- It is up to the field to implement division by 0
 def div? (t₁ t₂ : MTerm F) : Option (MTerm F) :=
-  let ⟨c₁, m₁⟩ := t₁
-  let ⟨c₂, m₂⟩ := t₂
+  let ⟨c₁, m₁⟩ := normalize t₁
+  let ⟨c₂, m₂⟩ := normalize t₂
   if c₂ = 0 then
     none
   else
@@ -123,54 +139,54 @@ def div? (t₁ t₂ : MTerm F) : Option (MTerm F) :=
 
 /-- Division when you're confident it will work. -/
 def div! (t₁ t₂ : MTerm F) : MTerm F :=
-  let ⟨c₁, m₁⟩ := t₁
-  let ⟨c₂, m₂⟩ := t₂
+  let ⟨c₁, m₁⟩ := normalize t₁
+  let ⟨c₂, m₂⟩ := normalize t₂
   mk (c₁ / c₂) (m₁.div! m₂)
 
 end MTerm
 
 --------------------------------------------------------------------------------
 
-namespace MTermRef
+-- namespace MTermRef
 
-variable {F : Type u} [Field F] [DecidableEq F]
+-- variable {F : Type u} [Field F] [DecidableEq F]
 
-protected def zero : (MTermRef F) := mk 0 0
-instance instZero : Zero (MTermRef F) := ⟨MTermRef.zero⟩
-instance instInhabited : Inhabited (MTermRef F) := ⟨0⟩
+-- protected def zero : (MTermRef F) := mk 0 0
+-- instance instZero : Zero (MTermRef F) := ⟨MTermRef.zero⟩
+-- instance instInhabited : Inhabited (MTermRef F) := ⟨0⟩
 
-def toString [ToString F] : (MTermRef F) → String
-  | ⟨c, m⟩ =>
-  if c = 1 then
-    s!"x{m}"
-  else if c = -1 then
-    s!"-x{m}"
-  else
-    s!"{c} x{m}"
+-- def toString [ToString F] : (MTermRef F) → String
+--   | ⟨c, m⟩ =>
+--   if c = 1 then
+--     s!"x{m}"
+--   else if c = -1 then
+--     s!"-x{m}"
+--   else
+--     s!"{c} x{m}"
 
-instance instToString [ToString F] : ToString (MTermRef F) := ⟨toString⟩
+-- instance instToString [ToString F] : ToString (MTermRef F) := ⟨toString⟩
 
-def neg (t : MTermRef F) : MTermRef F :=
-  mk (-t.coeff) t.monomial
+-- def neg (t : MTermRef F) : MTermRef F :=
+--   mk (-t.coeff) t.monomial
 
--- Adds two monomials. Checks if their references are the same.
-protected def add (t₁ t₂ : MTermRef F) : MTermRef F :=
-  if t₁.monomial = t₂.monomial then
-    mk (t₁.coeff + t₂.coeff) t₁.monomial
-  else
-    panic! "monomials must be equal"
+-- -- Adds two monomials. Checks if their references are the same.
+-- protected def add (t₁ t₂ : MTermRef F) : MTermRef F :=
+--   if t₁.monomial = t₂.monomial then
+--     mk (t₁.coeff + t₂.coeff) t₁.monomial
+--   else
+--     panic! "monomials must be equal"
 
--- Subtracts two monomials. Checks if their references are the same.
-protected def sub (t₁ t₂ : MTermRef F) : MTermRef F :=
-  if t₁.monomial = t₂.monomial then
-    mk (t₁.coeff - t₂.coeff) t₁.monomial
-  else
-    panic! "monomials must be equal"
+-- -- Subtracts two monomials. Checks if their references are the same.
+-- protected def sub (t₁ t₂ : MTermRef F) : MTermRef F :=
+--   if t₁.monomial = t₂.monomial then
+--     mk (t₁.coeff - t₂.coeff) t₁.monomial
+--   else
+--     panic! "monomials must be equal"
 
-instance instNeg : Neg (MTermRef F) := ⟨neg⟩
-instance instAdd : Add (MTermRef F) := ⟨MTermRef.add⟩
-instance instSub : Sub (MTermRef F) := ⟨MTermRef.sub⟩
+-- instance instNeg : Neg (MTermRef F) := ⟨neg⟩
+-- instance instAdd : Add (MTermRef F) := ⟨MTermRef.add⟩
+-- instance instSub : Sub (MTermRef F) := ⟨MTermRef.sub⟩
 
-end MTermRef
+-- end MTermRef
 
 end HDP.Data

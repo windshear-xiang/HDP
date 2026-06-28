@@ -27,6 +27,8 @@ namespace VerusLean
 
 namespace Integer_ring
 
+set_option trace.hdp true
+
 -- open Vstd
 
 /- Prelude done. Place all declarations below. MAGIC COMMENT END. -/
@@ -41,25 +43,25 @@ def quad (a : Int) : Int :=
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem simple_1 (x y z m : Int) : (x - y) % m = 0 → (((x) * (z) - (y) * (z)) % m = 0) := by
-  sorry
+  hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem simple_2 (x y z : Int) :
     True →
       ((x + y + z) * (x + y + z) = (x) * (x) + (y) * (y) + (z) * (z) + (2) * ((x) * (y) + (y) * (z) + (z) * (x))) :=
-  by sorry
+  by hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mont_mul_1 (a s R M RR R_INV : Int) :
     ((a) * (R) - (RR) * (s) % M) = 0 → ((R_INV) * (R) - 1) % M = 0 → (RR - (R) * (R) % M) = 0 → ((a - (s) * (R)) % M = 0) := by
-  sorry
+  hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mont_mul_2 (p2_full BASE ui m0 m0d p1_lh p1_full : Int) :
     p2_full = (ui) * (m0) + p1_lh → (p1_full - p1_lh) % BASE = 0 → ((m0d) * (m0) - (BASE - 1)) % BASE = 0 →
         (ui - (p1_full) * (m0d)) % BASE = 0 →
       (p2_full % BASE = 0) :=
-  by sorry
+  by hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem wide_mul (B p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 x x_0 x_1 x_2 x_3 y y_0 y_1 y_2 y_3 : Int) :
@@ -86,23 +88,23 @@ theorem wide_mul (B p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 x x_0 
               ((((p10 + p11 + p12) * (B)) * (B)) * (B)) * (B) +
             (((((p13 + p14) * (B)) * (B)) * (B)) * (B)) * (B) +
           ((((((p15) * (B)) * (B)) * (B)) * (B)) * (B)) * (B)) :=
-  by sorry
+  by hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem test (x y m : Int) :
     (square x - square y) % m = 0 → square x = (x) * (x) → square y = (y) * (y) → quad x = (((x) * (x)) * (x)) * (x) →
         quad y = (((y) * (y)) * (y)) * (y) →
       ((quad x - quad y) % m = 0) :=
-  by sorry
+  by hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem simple_fail_1 (x y z m : Int) : (x - y) % m = 0 → ((x) * (z) + (y) * (z) % m = 0) := by sorry
+theorem simple_fail_1 (x y z m : Int) : (x - y) % m = 0 → ((x) * (z) + (y) * (z) % m = 0) := by hdp
 -- should FAIL
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem simple_fail_2 (x y z : Int) :
     True → ((x + y + z) * (x + y + z) = (x) * (x) + (y) * (y) + z + (2) * ((x) * (y) + (y) * (z) + (z) * (x))) := by
-  sorry
+  hdp
 -- should FAIL
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
@@ -131,49 +133,49 @@ theorem wide_mul_fail
               ((((p10 + p11 + p12) * (B)) * (B)) * (B)) * (B) +
             (((((p13 + p14) * (B)) * (B)) * (B)) * (B)) * (B) +
           ((((((p15) * (B)) * (B)) * (B)) * (B)) * (B)) * (B)) :=
-  by sorry
+  by hdp
 -- should FAIL
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem type_fail (x y z : UInt32) (m : Int) : (x - y) % m = 0 → (((x) * (z) - (y) * (z)) % m = 0) := by sorry
+theorem type_fail (x y z : UInt32) (m : Int) : (x - y) % m = 0 → (((x) * (z) - (y) * (z)) % m = 0) := by hdp
 -- FAILS in Verus (not supported)
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem reserved_keyword (singular_tmp_1 y z m : Int) :
-    (singular_tmp_1 - y) % m = 0 → (((singular_tmp_1) * (z) - (y) * (z)) % m = 0) := by sorry
+    (singular_tmp_1 - y) % m = 0 → (((singular_tmp_1) * (z) - (y) * (z)) % m = 0) := by hdp
 -- FAILS in Verus (not supported)
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mul_mod_noop (x y m : Int) :
     True →
       ((x % m) * (y) % m = (x) * (y) % m ∧ (x) * (y % m) % m = (x) * (y) % m ∧ (x % m) * (y % m) % m = (x) * (y) % m) :=
-  by sorry
+  by hdp
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mul_mod_noop_fail_1 (x y m : Int) :
     True → ((x % m) * (y) % m = (x) * (y) % m ∧ (x % m) * (y % m) % m = x % m ∧ (x) * (y % m) % m = (x) * (y) % m) :=
-  by sorry
+  by hdp
 -- the 2nd postcondition should FAIL
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mul_mod_noop_fail_2 (x y m : Int) :
-    True → ((x % m) * (y) % m = (x) * (y) % m ∧ (x % m) * (y % m) % m = x % m ∧ (x) * (y % m) % m = x % m) := by sorry
+    True → ((x % m) * (y) % m = (x) * (y) % m ∧ (x % m) * (y % m) % m = x % m ∧ (x) * (y % m) % m = x % m) := by hdp
 -- now the 3rd postcondition should also FAIL
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem neq_not_supported (x y z m : Int) : ¬((x - y) % m = 0) → (((x) * (z) + (y) * (z)) % m = 0) := by sorry
+theorem neq_not_supported (x y z m : Int) : ¬((x - y) % m = 0) → (((x) * (z) + (y) * (z)) % m = 0) := by hdp
 -- FAILS in Verus (not supported)
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem gt_not_supported (x y z m : Int) : (x - y) % m > 0 → (((x) * (z) + (y) * (z)) % m = 0) := by sorry
+theorem gt_not_supported (x y z m : Int) : (x - y) % m > 0 → (((x) * (z) + (y) * (z)) % m = 0) := by hdp
 -- FAILS in Verus (not supported)
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem lt_not_supported (x y z m : Int) : (x - y) % m = 0 → (((x) * (z) + (y) * (z)) % m < 0) := by sorry
+theorem lt_not_supported (x y z m : Int) : (x - y) % m = 0 → (((x) * (z) + (y) * (z)) % m < 0) := by hdp
 -- FAILS in Verus (not supported)
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
-theorem mod_trans (a b c : Int) : a % b = 0 → b % c = 0 → (a % c = 0) := by sorry
+theorem mod_trans (a b c : Int) : a % b = 0 → b % c = 0 → (a % c = 0) := by hdp
 
 end Integer_ring /- namespace -/
 

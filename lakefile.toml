@@ -1,6 +1,6 @@
 name = "HDP"
 version = "0.1.0"
-defaultTargets = ["hdp"]
+defaultTargets = ["HDP"]
 
 [[lean_lib]]
 name = "HDP"

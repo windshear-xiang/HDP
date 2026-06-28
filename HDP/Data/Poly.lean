@@ -5,59 +5,100 @@ open Lean.Grind (Field)
 namespace HDP.Data
 
 /-- Concrete representation of polynomials. (Array of `MTerm`s.) -/
-abbrev Poly (F : Type u) [Field F] [DecidableEq F] := Array (MTerm F)
+structure Poly (F : Type u) [Field F] [DecidableEq F] where
+  terms : Array (MTerm F)
+deriving Inhabited
 
 /-structure PolyRef where
   index : Nat
   history : PolyHistory
 deriving Inhabited -/
 
-scoped notation "M[" F "]" => MTerm F
-scoped notation "P[" F "]" => Poly F
+@[inherit_doc] scoped notation "M[" F "]" => MTerm F
+@[inherit_doc] scoped notation "P[" F "]" => Poly F
 
 namespace Poly
 
 variable {F : Type u} [Field F] [DecidableEq F]
 
-def size (p : P[F]) : Nat := Array.size p
+/-- Drop all tail 0s in monomials, and drop zero coeff terms -/
+def normalizeTerms (p : P[F]) : P[F] :=
+  ⟨(p.terms.map MTerm.normalize).filter (fun t => decide (t.coeff ≠ 0))⟩
 
-protected def zero : P[F] := #[]
-protected def one : P[F] := #[MTerm.one]
+instance instCoeOfArray : Coe (Array M[F]) P[F] :=
+  ⟨fun ts => normalizeTerms ⟨ts⟩⟩
+
+instance instDecidableEq : DecidableEq P[F] := by
+  intro p q
+  cases p
+  cases q
+  simp only [mk.injEq]
+  infer_instance
+
+def size (p : P[F]) : Nat := p.terms.size
+
+instance instGetElem : GetElem P[F] Nat M[F] (fun p i => i < p.size) where
+  getElem p i h := p.terms[i]
+
+def push (p : P[F]) (t : M[F]) : P[F] :=
+  let t := MTerm.normalize t
+  if t.coeff = 0 then p else ⟨p.terms.push t⟩
+def pop (p : P[F]) : P[F] := ⟨p.terms.pop⟩
+def back? (p : P[F]) : Option M[F] := p.terms.back?
+def qsort (p : P[F]) (lt : M[F] → M[F] → Bool) : P[F] := ⟨p.terms.qsort lt⟩
+def toList (p : P[F]) : List M[F] := p.terms.toList
+
+def map (p : P[F]) (f : M[F] → α) : Array α := p.terms.map f
+
+protected def zero : P[F] := ⟨#[]⟩
+protected def one : P[F] := ⟨#[MTerm.one]⟩
 
 instance instZero : Zero P[F] := ⟨Poly.zero⟩
 instance instInhabited : Inhabited P[F] := ⟨0⟩
 
-def ofMonomial (m : Monomial) : P[F] := #[⟨1, m⟩]
-def ofMTerm (t : MTerm F) : P[F] := #[t]
+def ofMonomial (m : Monomial) : P[F] := ⟨#[MTerm.normalize ⟨1, m⟩]⟩
+def ofMTerm (t : MTerm F) : P[F] :=
+  let t := MTerm.normalize t
+  if t.coeff = 0 then 0 else ⟨#[t]⟩
 
 instance instCoeOfMTerm : Coe M[F] P[F] := ⟨ofMTerm⟩
 instance instCoeOfMonomial : Coe Monomial P[F] := ⟨ofMonomial⟩
 
 def toString [ToString F] (p : P[F]) : String :=
-  let rec loop (i : Nat) (str : String) : String :=
-    if h : i < p.size then
-      let t := p[i]
-      let c := t.coeff
-      let m := t.monomial
-      if str.length > 0 then
-        loop (i + 1) (str ++ s!" + {MTerm.mk c m}")
-      else
-        loop (i + 1) s!"{MTerm.mk c m}"
-    else str
-  loop 0 ""
+  let p := normalizeTerms p
+  if p.size = 0 then
+    "0"
+  else
+    let rec loop (i : Nat) (str : String) : String :=
+      if h : i < p.size then
+        let t := p[i]
+        let c := t.coeff
+        let m := t.monomial
+        if str.length > 0 then
+          if t.toString.startsWith "-" then
+            loop (i + 1) (str ++ s!" - {MTerm.mk (-c) m}")
+          else
+            loop (i + 1) (str ++ s!" + {MTerm.mk c m}")
+        else
+          loop (i + 1) s!"{MTerm.mk c m}"
+      else str
+    termination_by p.size - i
+    loop 0 ""
 
 instance instToString [ToString F] : ToString P[F] := ⟨toString⟩
 
 def leadingTerm (p : P[F]) : M[F] :=
   if h : p.size > 0 then
-    p[0]
+    MTerm.normalize p[0]
   else
-    ⟨0, 0⟩
+    ⟨0, Monomial.unit⟩
 
-def normalize (p : P[F]) : P[F] :=
+/-- Divide leading coefficient to make it 1 -/
+def monic (p : P[F]) : P[F] :=
+  let p := normalizeTerms p
   if p.size = 0 then p else
   let leadingCoeff := p.leadingTerm.coeff
-  p.map (λ t => ⟨t.coeff / leadingCoeff, t.monomial⟩)
+  ⟨p.map (λ t => MTerm.normalize ⟨t.coeff / leadingCoeff, t.monomial⟩)⟩
 
 protected def neg (p : P[F]) : P[F] :=
   p.map (λ t => -t)
@@ -166,6 +207,21 @@ protected def mul (p₁ p₂ : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P
 
 instance instMul : Mul P[F] := ⟨Poly.mul⟩
 
+/-- Raises a polynomial to a natural number power using binary exponentiation. -/
+protected def scPow (p : P[F]) : Nat → P[F]
+  | 0 => Poly.one
+  | 1 => p
+  | n =>
+    let rec loop (acc base : P[F]) (k : Nat) : P[F] :=
+      if k = 0 then acc
+      else
+        let acc' := if k % 2 = 1 then acc * base else acc
+        loop acc' (base * base) (k / 2)
+    termination_by k
+    loop Poly.one p n
+
+instance instHPow : HPow P[F] Nat P[F] := ⟨Poly.scPow⟩
+
 -- Divides `p₁` by `p₂`. Returns a pair `(q, r)`.
 -- If `p₂` is zero, returns `(0, 0)`.
 protected partial def div (p₁ p₂ : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P[F] × P[F] :=
@@ -240,6 +296,7 @@ partial def divPolys (p : P[F]) (ps : Array P[F])
   sorts terms in decreasing order under `cmp`, merges like monomials
 -/
 def canonicalize (p : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P[F] :=
+  let p := normalizeTerms p
   -- `Array.qsort lt`: `lt a b = true` ⇒ `a` comes before `b`. We want
   -- larger monomials first, i.e. `a > b ↔ cmp b.mon a.mon = .lt`.
   let sorted := p.qsort (λ a b => cmp b.monomial a.monomial = .lt)
@@ -264,7 +321,7 @@ def canonicalize (p : P[F]) (cmp : MOrder := Monomial.grevlexOrder) : P[F] :=
     else
       acc
   termination_by sorted.size - i
-  loop 0 #[]
+  loop 0 0
 
 end Poly
 
