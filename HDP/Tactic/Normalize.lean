@@ -127,7 +127,7 @@ def normalizeGHs : TacticM Unit := do
     | throwError m!"Expected 1 goal after simp, got {(← getUnsolvedGoals).length}"
 
   let g₁Type ← g₁.getType
-  checkGoalNormalized (g₁Type)
+  checkGoalNormalized g₁Type
 
   -- Record all mod, gcd, and neq hyp
   let (_, normState) <-

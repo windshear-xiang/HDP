@@ -49,7 +49,8 @@ theorem simple_1 (x y z m : Int) : (x - y) % m = 0 → (((x) * (z) - (y) * (z)) 
 theorem simple_2 (x y z : Int) :
     True →
       ((x + y + z) * (x + y + z) = (x) * (x) + (y) * (y) + (z) * (z) + (2) * ((x) * (y) + (y) * (z) + (z) * (x))) :=
-  by hdp
+  -- by hdp
+  by intros; subst_vars; grind
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem mont_mul_1 (a s R M RR R_INV : Int) :
@@ -88,7 +89,8 @@ theorem wide_mul (B p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 x x_0 
               ((((p10 + p11 + p12) * (B)) * (B)) * (B)) * (B) +
             (((((p13 + p14) * (B)) * (B)) * (B)) * (B)) * (B) +
           ((((((p15) * (B)) * (B)) * (B)) * (B)) * (B)) * (B)) :=
-  by hdp
+  -- by hdp
+  by intros; subst_vars; grind
 
 /- Auto-generated. Don't edit (proofs are okay). MAGIC COMMENT END -/
 theorem test (x y m : Int) :
